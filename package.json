@@ -1,0 +1,30 @@
+{
+  "name": "rtk-pi",
+  "version": "1.0.0",
+  "description": "RTK (Reduced Token Killer) extension for badlogic/pi-mono",
+  "main": "rtk.ts",
+  "keywords": [
+    "pi",
+    "rtk",
+    "token-optimization",
+    "cli",
+    "ai-coding-agent"
+  ],
+  "author": "ZogZog",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zogzog26/rtk-pi.git"
+  },
+  "files": [
+    "rtk.ts",
+    "RTK.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "@mariozechner/pi-coding-agent": ">=0.50.0"
+  }
+}
