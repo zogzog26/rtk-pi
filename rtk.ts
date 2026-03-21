@@ -8,17 +8,14 @@
  *   pi -e /path/to/this/extension.ts
  *
  * Or install globally:
- *   cp hooks/pi-rtk-rewrite.ts ~/.pi/agent/extensions/rtk.ts
+ *   cp rtk.ts ~/.pi/agent/extensions/rtk.ts
  *   pi will auto-load extensions from ~/.pi/agent/extensions/
  */
 
-import { createBashTool } from "@mariozechner/pi-coding-agent";
 import { execSync } from "node:child_process";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
-	const cwd = process.cwd();
-
 	// Check if rtk is available
 	let rtkAvailable = false;
 	try {
@@ -33,37 +30,27 @@ export default function (pi: ExtensionAPI) {
 		return;
 	}
 
-	// Create bash tool with spawnHook that rewrites commands via rtk
-	const bashTool = createBashTool(cwd, {
-		spawnHook: ({ command, cwd, env }) => {
-			try {
-				// Delegate rewrite logic to rtk binary
-				// rtk rewrite outputs the rewritten command to stdout, or exits 1 if no rewrite needed
-				const rewritten = execSync(`rtk rewrite "${command.replace(/"/g, '\\"')}"`, {
-					cwd,
-					env,
-					encoding: "utf-8",
-					stdio: ["ignore", "pipe", "ignore"],
-				}).trim();
+	// Intercept tool_call events to rewrite bash commands via rtk
+	pi.on("tool_call", async (event, _ctx) => {
+		if (event.toolName !== "bash") return;
+		
+		const command = event.input?.command;
+		if (!command || typeof command !== "string") return;
 
-				// If no change, return original
-				if (!rewritten || rewritten === command) {
-					return { command, cwd, env };
-				}
+		try {
+			// rtk rewrite outputs the rewritten command to stdout, or exits 1 if no rewrite needed
+			const rewritten = execSync(`rtk rewrite "${command.replace(/"/g, '\\"')}"`, {
+				encoding: "utf-8",
+				stdio: ["ignore", "pipe", "ignore"],
+			}).trim();
 
-				console.error(`[rtk] Rewrote: ${command} -> ${rewritten}`);
-				return { command: rewritten, cwd, env };
-			} catch {
-				// rtk rewrite exits 1 when no rewrite needed - that's fine
-				return { command, cwd, env };
-			}
-		},
-	});
+			// If no change, return original
+			if (!rewritten || rewritten === command) return;
 
-	pi.registerTool({
-		...bashTool,
-		execute: async (id, params, signal, onUpdate, _ctx) => {
-			return bashTool.execute(id, params, signal, onUpdate);
-		},
+			// Modify the command in place
+			event.input.command = rewritten;
+		} catch {
+			// rtk rewrite exits 1 when no rewrite needed - that's fine
+		}
 	});
 }
