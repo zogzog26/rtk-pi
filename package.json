@@ -1,10 +1,12 @@
 {
   "name": "@zogzog26/rtk-pi",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "RTK (Reduced Token Killer) extension for badlogic/pi-mono",
   "main": "rtk.ts",
   "pi": {
-    "extensions": ["./rtk.ts"]
+    "extensions": [
+      "./rtk.ts"
+    ]
   },
   "keywords": [
     "pi",
