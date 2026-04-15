@@ -26,6 +26,7 @@ export default function (pi: ExtensionAPI) {
 		rtkAvailable = true;
 	} catch {
 		// rtk not available, skip hook
+		console.warn("[rtk] WARNING: rtk not found in PATH. Install from https://github.com/rtk-ai/rtk");
 	}
 
 	if (!rtkAvailable) {
