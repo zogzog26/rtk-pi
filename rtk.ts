@@ -15,12 +15,10 @@
  */
 
 import { execSync } from "node:child_process";
-import type { ExtensionAPI, BashToolInput } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { createBashTool } from "@mariozechner/pi-coding-agent";
 
 export default function (pi: ExtensionAPI) {
-	console.log("[rtk] Extension loaded!");
-
 	// Check if rtk is available
 	let rtkAvailable = false;
 	try {
@@ -31,19 +29,14 @@ export default function (pi: ExtensionAPI) {
 	}
 
 	if (!rtkAvailable) {
-		console.warn("[rtk] WARNING: rtk not found in PATH. Install from https://github.com/rtk-ai/rtk");
 		return;
 	}
-
-	console.log("[rtk] rtk available, registering bash tool override");
 
 	// Create a custom bash tool with spawnHook to rewrite commands
 	const cwd = process.cwd();
 
 	const bashTool = createBashTool(cwd, {
 		spawnHook: ({ command, cwd, env }) => {
-			console.log("[rtk] spawnHook intercepting command:", command);
-
 			try {
 				// rtk rewrite outputs the rewritten command to stdout, or exits 1 if no rewrite needed
 				const rewritten = execSync(`rtk rewrite "${command.replace(/"/g, '\\"')}"`, {
@@ -52,7 +45,6 @@ export default function (pi: ExtensionAPI) {
 				}).trim();
 
 				if (rewritten && rewritten !== command) {
-					console.log("[rtk] Rewrote command:", command, "->", rewritten);
 					return { command: rewritten, cwd, env };
 				}
 			} catch {
@@ -68,10 +60,7 @@ export default function (pi: ExtensionAPI) {
 		...bashTool,
 		name: "bash",
 		execute: async (id, params, signal, onUpdate, _ctx) => {
-			// Call the original bash tool's execute
 			return bashTool.execute(id, params, signal, onUpdate);
 		},
 	});
-
-	console.log("[rtk] Bash tool override registered successfully");
 }
